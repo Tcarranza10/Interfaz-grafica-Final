@@ -403,6 +403,9 @@ public class PantallaCreacion extends javax.swing.JFrame {
     public javax.swing.JSpinner getSpnVidaV1() { return spnVidaV1; }
     public javax.swing.JSpinner getSpnFuerzaV1() { return spnFuerzaV1; }
     public javax.swing.JSpinner getSpnDefensaV1() { return spnDefensaV1; }
+    public javax.swing.JTabbedPane getjTabbedPane1() {
+    return jTabbedPane1;
+}
     
     // Getters para componentes del tab Cargar
     public javax.swing.JComboBox<String> getCboxNombreHeroe() { return cboxNombreHeroe; }
@@ -520,4 +523,6 @@ public class PantallaCreacion extends javax.swing.JFrame {
     private javax.swing.JTextField txtNombreHeroe;
     private javax.swing.JTextField txtNombreV;
     // End of variables declaration//GEN-END:variables
+
+    
 }

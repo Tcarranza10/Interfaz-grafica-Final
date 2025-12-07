@@ -1,17 +1,16 @@
 package batalla.controlador;
 
+import batalla.Conexion.BatallaDAO;
+import batalla.Conexion.PersonajeDAO;
 import batalla.modelo.*;
 import batalla.vista.PantallaBatalla;
 import batalla.vista.PantallaResultado;
 
+import javax.swing.Timer; // ← IMPORTANTE: javax.swing.Timer, NO java.util.Timer
 import java.util.Random;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Controlador para la pantalla de batalla
- * Gestiona la lógica de combate entre héroe y villano
- */
 public class ControladorBatalla {
     private PantallaBatalla vista;
     private ConfiguracionPartida config;
@@ -22,8 +21,14 @@ public class ControladorBatalla {
     private Random random = new Random();
     private boolean turnoHeroe;
     private boolean pausado = false;
+    private Timer timer; // ✅ NUEVO: Timer para controlar turnos
+    
+    private List<String> combatLog = new ArrayList<>();
+    private int mayorDanio = 0;
+    private String personajeMayorDanio = "";
+    private int batallaMasLarga = 0;
+    private String ganadorBatallaMasLarga = "";
 
-    // Constructor con ConfiguracionPartida
     public ControladorBatalla(PantallaBatalla vista, ConfiguracionPartida config) {
         this.vista = vista;
         this.config = config;
@@ -33,7 +38,6 @@ public class ControladorBatalla {
         configurarEventos();
     }
     
-    // Constructor de compatibilidad
     public ControladorBatalla(PantallaBatalla vista, Heroe heroe, Villano villano) {
         this.vista = vista;
         this.heroe = heroe;
@@ -50,17 +54,14 @@ public class ControladorBatalla {
     }
     
     private void iniciarBatallas() {
-        // Obtener configuración de la vista
         int cantidadBatallas = (int) vista.getSpnNumBatallas().getValue();
         boolean ataquesSupremos = vista.getChkAtkSupremos().isSelected();
         
         config.setCantidadBatallas(cantidadBatallas);
         config.setAtaquesSupremosActivados(ataquesSupremos);
         
-        // Desactivar botón
         vista.getBtnIniciar().setEnabled(false);
         
-        // Iniciar primera batalla
         batallaActual = 1;
         turno = 1;
         iniciarBatalla();
@@ -74,7 +75,6 @@ public class ControladorBatalla {
     }
     
     private void iniciarBatalla() {
-        // Restaurar todas las estadísticas iniciales antes de cada batalla
         heroe.restaurarEstadisticasIniciales();
         villano.restaurarEstadisticasIniciales();
         
@@ -93,22 +93,32 @@ public class ControladorBatalla {
         
         actualizarEstadoPersonajes();
         
-        // Iniciar el ciclo de batalla
-        siguienteTurno();
+        // ✅ CAMBIO: Iniciar el timer para ejecutar turnos con delay
+        iniciarTimerTurnos();
     }
     
-    private void actualizarInformacionPartida() {
-        vista.setInfoPartida("Batalla: " + batallaActual + "/" + config.getCantidadBatallas());
-        vista.setTurno("Turno: " + turno);
+    // ✅ NUEVO MÉTODO: Usar Timer de Swing
+    private void iniciarTimerTurnos() {
+        // Detener timer anterior si existe
+        if (timer != null && timer.isRunning()) {
+            timer.stop();
+        }
+        
+        // Crear nuevo timer que ejecuta cada 2 segundos
+        timer = new Timer(1000, e -> {
+            if (!pausado) {
+                ejecutarTurno();
+            }
+        });
+        
+        timer.start();
     }
     
-    private void actualizarEstadoPersonajes() {
-        vista.actualizarEstadoPersonaje(heroe);
-        vista.actualizarEstadoPersonaje(villano);
-    }
-
-    public void siguienteTurno() {
+    // ✅ RENOMBRADO: De siguienteTurno() a ejecutarTurno()
+    private void ejecutarTurno() {
+        // Verificar si la batalla terminó
         if (!heroe.estaVivo() || !villano.estaVivo()) {
+            timer.stop(); // ← Detener el timer
             finalizarBatalla();
             return;
         }
@@ -125,7 +135,6 @@ public class ControladorBatalla {
             vista.agregarLog(logTurnoHeroe);
             combatLog.add(logTurnoHeroe);
             
-            // Usar ataque supremo si tiene 100% bendiciones y está activado
             if (config.isAtaquesSupremosActivados() && heroe.getBendiciones() >= 100) {
                 String logSupremo = heroe.getNombre() + " tiene 100% de bendiciones! Usando ataque supremo!";
                 vista.agregarLog(logSupremo);
@@ -145,7 +154,6 @@ public class ControladorBatalla {
             vista.agregarLog(logTurnoVillano);
             combatLog.add(logTurnoVillano);
             
-            // Usar ataque supremo si tiene 100% bendiciones y está activado
             if (config.isAtaquesSupremosActivados() && villano.getBendiciones() >= 100 && !villano.isLeviatanInvocado()) {
                 String logSupremo = villano.getNombre() + " tiene 100% de maldiciones! Invocando Leviatán!";
                 vista.agregarLog(logSupremo);
@@ -159,13 +167,11 @@ public class ControladorBatalla {
             }
         }
         
-        // Actualizar mayor daño
         if (danioCausado > mayorDanio) {
             mayorDanio = danioCausado;
             personajeMayorDanio = atacante;
         }
         
-        // Mostrar estado actual
         vista.agregarLog("");
         String logEstado = "Estado actual:";
         vista.agregarLog(logEstado);
@@ -177,6 +183,8 @@ public class ControladorBatalla {
         vista.agregarLog(logHeroe);
         vista.agregarLog(logVillano);
         vista.agregarLog("");
+        vista.agregarLog("─────────────────────────────"); // Separador visual
+        vista.agregarLog("");
         combatLog.add(logHeroe);
         combatLog.add(logVillano);
         
@@ -184,29 +192,17 @@ public class ControladorBatalla {
         turno++;
         actualizarInformacionPartida();
         actualizarEstadoPersonajes();
-        
-        // Continuar automáticamente si ambos están vivos y no está pausado
-        if (heroe.estaVivo() && villano.estaVivo() && !pausado) {
-            javax.swing.SwingUtilities.invokeLater(() -> {
-                try {
-                    Thread.sleep(1000); // Pausa de 1 segundo entre turnos
-                    if (!pausado) {
-                        siguienteTurno();
-                    }
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                }
-            });
-        } else if (!pausado) {
-            finalizarBatalla();
-        }
     }
     
-    private List<String> combatLog = new ArrayList<>();
-    private int mayorDanio = 0;
-    private String personajeMayorDanio = "";
-    private int batallaMasLarga = 0;
-    private String ganadorBatallaMasLarga = "";
+    private void actualizarInformacionPartida() {
+        vista.setInfoPartida("Batalla: " + batallaActual + "/" + config.getCantidadBatallas());
+        vista.setTurno("Turno: " + turno);
+    }
+    
+    private void actualizarEstadoPersonajes() {
+        vista.actualizarEstadoPersonaje(heroe);
+        vista.actualizarEstadoPersonaje(villano);
+    }
 
     private void finalizarBatalla() {
         String logFinal = "=== BATALLA FINALIZADA ===";
@@ -218,31 +214,55 @@ public class ControladorBatalla {
         if (heroe.estaVivo()) {
             ganador = heroe;
             heroe.incrementarVictoria();
+            villano.incrementarDerrota();
             logGanador = heroe.getNombre() + " ha triunfado!";
             vista.agregarLog(logGanador);
             combatLog.add(logGanador);
         } else {
             ganador = villano;
             villano.incrementarVictoria();
+            heroe.incrementarDerrota();
             logGanador = villano.getNombre() + " ha vencido!";
             vista.agregarLog(logGanador);
             combatLog.add(logGanador);
         }
         
-        // Actualizar estadísticas
         if (turno > batallaMasLarga) {
             batallaMasLarga = turno;
             ganadorBatallaMasLarga = ganador.getNombre();
         }
         
-        // Verificar si hay más batallas
+        guardarBatallaEnBD(ganador, turno);
+        
         batallaActual++;
         if (batallaActual > config.getCantidadBatallas()) {
-            // Todas las batallas completadas
             finalizarTodasLasBatallas();
         } else {
-            // Reiniciar para siguiente batalla
             reiniciarParaSiguienteBatalla();
+        }
+    }
+    
+    private void guardarBatallaEnBD(Personaje ganador, int turnos) {
+        try {
+            PersonajeDAO pdao = new PersonajeDAO();
+            
+            int heroeId = pdao.asegurarPersonajeEnBD(heroe);
+            int villanoId = pdao.asegurarPersonajeEnBD(villano);
+            int ganadorId = pdao.asegurarPersonajeEnBD(ganador);
+            
+            if (heroeId > 0 && villanoId > 0 && ganadorId > 0) {
+                pdao.actualizarEstadisticas(heroe);
+                pdao.actualizarEstadisticas(villano);
+                
+                BatallaDAO batallaDAO = new BatallaDAO();
+                batallaDAO.insertarBatalla(heroe, villano, ganador, turnos);
+                
+                System.out.println("✓ Batalla guardada en BD correctamente");
+            } else {
+                System.err.println("✗ Error: IDs inválidos");
+            }
+        } catch (Exception e) {
+            System.err.println("✗ Error al guardar batalla en BD: " + e.getMessage());
         }
     }
     
@@ -253,21 +273,22 @@ public class ControladorBatalla {
         combatLog.add("");
         combatLog.add(logPreparacion);
         
-        javax.swing.SwingUtilities.invokeLater(() -> {
-            try {
-                Thread.sleep(2000);
-                iniciarBatalla();
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-            }
+        // Usar Timer para el delay entre batallas
+        Timer delayTimer = new Timer(3000, e -> {
+            iniciarBatalla();
         });
+        delayTimer.setRepeats(false); // Solo una vez
+        delayTimer.start();
     }
     
     private void finalizarTodasLasBatallas() {
-        // Guardar estadísticas de personajes
+        // Detener timer si está corriendo
+        if (timer != null && timer.isRunning()) {
+            timer.stop();
+        }
+        
         GestorPersistencia.guardarPersonajes(config.getPersonajes());
         
-        // Crear partida guardada con todos los datos
         PartidaGuardada partida = new PartidaGuardada();
         partida.setHeroeNombre(heroe.getNombre());
         partida.setHeroeApodo(heroe.getApodo());
@@ -277,15 +298,36 @@ public class ControladorBatalla {
         partida.setAtaquesSupremosActivados(config.isAtaquesSupremosActivados());
         partida.setCombatLog(combatLog);
         
-        // Abrir pantalla de resultados
+        PartidaGuardada.EstadisticaBatalla estadistica = new PartidaGuardada.EstadisticaBatalla();
+        estadistica.setMayorDanio(mayorDanio);
+        estadistica.setPersonajeMayorDanio(personajeMayorDanio);
+        estadistica.setTurnos(batallaMasLarga);
+        estadistica.setGanador(ganadorBatallaMasLarga);
+        estadistica.setArmasInvocadasHeroe(heroe.getArmasInvocadas());
+        estadistica.setArmasInvocadasVillano(villano.getArmasInvocadas());
+        estadistica.setAtaquesSupremosHeroe(heroe.getAtaquesSupremosUsados());
+        estadistica.setAtaquesSupremosVillano(villano.getAtaquesSupremosUsados());
+        partida.getEstadisticas().add(estadistica);
+        
         javax.swing.SwingUtilities.invokeLater(() -> {
             PantallaResultado pantallaResultado = new PantallaResultado();
+            
+            List<Personaje> personajesFinales = new ArrayList<>();
+            personajesFinales.add(heroe);
+            personajesFinales.add(villano);
+            
             ControladorResultado controladorResultado = new ControladorResultado(
-                pantallaResultado, config.getPersonajes(), config.getCantidadBatallas(), partida,
-                mayorDanio, personajeMayorDanio, batallaMasLarga, ganadorBatallaMasLarga);
+                pantallaResultado, 
+                personajesFinales,
+                config.getCantidadBatallas(), 
+                partida,
+                mayorDanio, 
+                personajeMayorDanio, 
+                batallaMasLarga, 
+                ganadorBatallaMasLarga
+            );
             controladorResultado.iniciar();
             vista.dispose();
         });
     }
 }
-

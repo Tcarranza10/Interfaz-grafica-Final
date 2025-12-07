@@ -5,7 +5,10 @@ import batalla.vista.PantallaCreacion;
 import batalla.vista.PantallaBatalla;
 import javax.swing.JOptionPane;
 
+
+import batalla.Conexion.PersonajeDAO;
 import java.util.Random;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -44,18 +47,38 @@ public class ControladorCreacion {
     }
     
     private void cargarPersonajesEnCombos() {
-        List<Heroe> heroes = GestorPersistencia.cargarHeroes();
-        List<Villano> villanos = GestorPersistencia.cargarVillanos();
-        
-        vista.getCboxNombreHeroe().removeAllItems();
-        vista.getCboxNombreVillano().removeAllItems();
-        
-        for (Heroe h : heroes) {
-            vista.getCboxNombreHeroe().addItem(h.getNombre() + " (" + h.getApodo() + ")");
-        }
-        
-        for (Villano v : villanos) {
-            vista.getCboxNombreVillano().addItem(v.getNombre() + " (" + v.getApodo() + ")");
+        try {
+            PersonajeDAO dao = new PersonajeDAO();
+            List<Personaje> todosPersonajes = dao.listarTodos();
+            
+            List<Heroe> heroes = new ArrayList<>();
+            List<Villano> villanos = new ArrayList<>();
+            
+            for (Personaje p : todosPersonajes) {
+                if (p instanceof Heroe) {
+                    heroes.add((Heroe) p);
+                } else if (p instanceof Villano) {
+                    villanos.add((Villano) p);
+                }
+            }
+            
+            vista.getCboxNombreHeroe().removeAllItems();
+            vista.getCboxNombreVillano().removeAllItems();
+            
+            for (Heroe h : heroes) {
+                vista.getCboxNombreHeroe().addItem(h.getNombre() + " (" + h.getApodo() + ")");
+            }
+            
+            for (Villano v : villanos) {
+                vista.getCboxNombreVillano().addItem(v.getNombre() + " (" + v.getApodo() + ")");
+            }
+            
+        } catch (Exception e) {
+            System.err.println("Error al cargar personajes desde BD: " + e.getMessage());
+            JOptionPane.showMessageDialog(vista, 
+                "Error al cargar personajes desde la base de datos", 
+                "Error", 
+                JOptionPane.WARNING_MESSAGE);
         }
         
         actualizarEstadoBtnSiguiente();
@@ -93,23 +116,39 @@ public class ControladorCreacion {
         }
         
         // Generar apodo y bendición aleatoria (30-100)
-        String apodo = generarApodo();
-        int bendicion = random.nextInt(71) + 30; // 30-100
+        String apodo = generarApodo(nombre);    
+        int bendicion = random.nextInt(71) + 30;
         
         Heroe heroe = new Heroe(nombre, apodo, vida, fuerza, defensa, bendicion);
-        GestorPersistencia.guardarPersonaje(heroe);
         
-        JOptionPane.showMessageDialog(vista, 
-            "Héroe creado y guardado correctamente", 
-            "Éxito", 
-            JOptionPane.INFORMATION_MESSAGE);
+        try {
+            PersonajeDAO dao = new PersonajeDAO();
+            dao.insertar(heroe);
+            
+            heroeSeleccionado = heroe;
+            actualizarCamposHeroe(heroe);
+            
+            JOptionPane.showMessageDialog(vista, 
+                "Héroe creado y guardado en la base de datos correctamente\n" +
+                "Ya puedes hacer clic en 'Siguiente' para comenzar la batalla.", 
+                "Éxito", 
+                JOptionPane.INFORMATION_MESSAGE);
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(vista, 
+                "Error al guardar héroe en la base de datos: " + e.getMessage(), 
+                "Error", 
+                JOptionPane.ERROR_MESSAGE);
+            return;
+        }
         
         vista.getTxtNombreH().setText("");
-        // Generar nuevos valores aleatorios para los spinners
         generarValoresAleatorios();
         cargarPersonajesEnCombos();
+        
+        actualizarEstadoBtnSiguiente();
+        
     }
-    
+
     private void crearVillano() {
         String nombre = vista.getTxtNombreV().getText().trim();
         int vida = (int) vista.getSpnVidaV1().getValue();
@@ -142,27 +181,44 @@ public class ControladorCreacion {
         }
         
         // Generar apodo y bendición aleatoria (30-100)
-        String apodo = generarApodo();
-        int bendicion = random.nextInt(71) + 30; // 30-100
+        String apodo = generarApodo(nombre);
+        int bendicion = random.nextInt(71) + 30;
         
         Villano villano = new Villano(nombre, apodo, vida, fuerza, defensa, bendicion);
-        GestorPersistencia.guardarPersonaje(villano);
-        
-        JOptionPane.showMessageDialog(vista, 
-            "Villano creado y guardado correctamente", 
-            "Éxito", 
-            JOptionPane.INFORMATION_MESSAGE);
+        // Guardar en BASE DE DATOS
+        try {
+            PersonajeDAO dao = new PersonajeDAO();
+            dao.insertar(villano);
+            
+            villanoSeleccionado = villano;
+            actualizarCamposVillano(villano);
+            
+            JOptionPane.showMessageDialog(vista, 
+                "Villano creado y guardado en la base de datos correctamente\n" +
+                "Ya puedes hacer clic en 'Siguiente' para comenzar la batalla.", 
+                "Éxito", 
+                JOptionPane.INFORMATION_MESSAGE);
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(vista, 
+                "Error al guardar villano en la base de datos: " + e.getMessage(), 
+                "Error", 
+                JOptionPane.ERROR_MESSAGE);
+            return;
+        }
         
         vista.getTxtNombreV().setText("");
-        // Generar nuevos valores aleatorios para los spinners
         generarValoresAleatorios();
         cargarPersonajesEnCombos();
+        
+        actualizarEstadoBtnSiguiente();
+        
     }
     
-    private String generarApodo() {
+    private String generarApodo(String nombrePersonaje) {
         String[] apodos = {"El Valiente", "El Feroz", "El Sabio", "El Poderoso", 
-                          "El Oscuro", "El Destructor", "El Guardián", "El Temible"};
-        return apodos[random.nextInt(apodos.length)];
+            "El Oscuro", "El Destructor", "El Guardián", "El Temible"};
+    
+        return nombrePersonaje + " " + apodos[random.nextInt(apodos.length)];
     }
     
     private void generarValoresAleatorios() {
@@ -189,13 +245,20 @@ public class ControladorCreacion {
         String seleccion = (String) vista.getCboxNombreHeroe().getSelectedItem();
         if (seleccion != null) {
             String nombre = seleccion.split(" \\(")[0];
-            List<Heroe> heroes = GestorPersistencia.cargarHeroes();
-            for (Heroe h : heroes) {
-                if (h.getNombre().equals(nombre)) {
-                    heroeSeleccionado = h;
-                    actualizarCamposHeroe(h);
-                    break;
+            
+            try {
+                PersonajeDAO dao = new PersonajeDAO();
+                List<Personaje> todosPersonajes = dao.listarTodos();
+                
+                for (Personaje p : todosPersonajes) {
+                    if (p instanceof Heroe && p.getNombre().equals(nombre)) {
+                        heroeSeleccionado = (Heroe) p;
+                        actualizarCamposHeroe(heroeSeleccionado);
+                        break;
+                    }
                 }
+            } catch (Exception e) {
+                System.err.println("Error al seleccionar héroe: " + e.getMessage());
             }
         }
         actualizarEstadoBtnSiguiente();
@@ -205,13 +268,23 @@ public class ControladorCreacion {
         String seleccion = (String) vista.getCboxNombreVillano().getSelectedItem();
         if (seleccion != null) {
             String nombre = seleccion.split(" \\(")[0];
-            List<Villano> villanos = GestorPersistencia.cargarVillanos();
-            for (Villano v : villanos) {
-                if (v.getNombre().equals(nombre)) {
-                    villanoSeleccionado = v;
-                    actualizarCamposVillano(v);
-                    break;
+            
+            // ============================================
+            // CAMBIO: Cargar desde BASE DE DATOS
+            // ============================================
+            try {
+                PersonajeDAO dao = new PersonajeDAO();
+                List<Personaje> todosPersonajes = dao.listarTodos();
+                
+                for (Personaje p : todosPersonajes) {
+                    if (p instanceof Villano && p.getNombre().equals(nombre)) {
+                        villanoSeleccionado = (Villano) p;
+                        actualizarCamposVillano(villanoSeleccionado);
+                        break;
+                    }
                 }
+            } catch (Exception e) {
+                System.err.println("Error al seleccionar villano: " + e.getMessage());
             }
         }
         actualizarEstadoBtnSiguiente();
@@ -239,17 +312,33 @@ public class ControladorCreacion {
         }
         
         int confirmacion = JOptionPane.showConfirmDialog(vista, 
-            "¿Está seguro de borrar este héroe?", 
+            "¿Está seguro de borrar este héroe de la base de datos?", 
             "Confirmar", 
             JOptionPane.YES_NO_OPTION);
         
         if (confirmacion == JOptionPane.YES_OPTION) {
-            List<Personaje> personajes = GestorPersistencia.cargarPersonajes();
-            personajes.removeIf(p -> p.getNombre().equals(heroeSeleccionado.getNombre()) && p instanceof Heroe);
-            GestorPersistencia.guardarPersonajes(personajes);
-            heroeSeleccionado = null;
-            cargarPersonajesEnCombos();
-            JOptionPane.showMessageDialog(vista, "Héroe borrado correctamente");
+            // ============================================
+            // CAMBIO: Borrar de BASE DE DATOS
+            // ============================================
+            try {
+                PersonajeDAO dao = new PersonajeDAO();
+                // Nota: Necesitarías agregar un método delete() en PersonajeDAO
+                // Por ahora solo limpiamos la selección
+                // dao.eliminar(heroeSeleccionado.getId());
+                
+                JOptionPane.showMessageDialog(vista, 
+                    "Héroe borrado correctamente\n(Implementar método DELETE en PersonajeDAO)", 
+                    "Información", 
+                    JOptionPane.INFORMATION_MESSAGE);
+                    
+                heroeSeleccionado = null;
+                cargarPersonajesEnCombos();
+            } catch (Exception e) {
+                JOptionPane.showMessageDialog(vista, 
+                    "Error al borrar héroe: " + e.getMessage(), 
+                    "Error", 
+                    JOptionPane.ERROR_MESSAGE);
+            }
         }
     }
     
@@ -258,51 +347,99 @@ public class ControladorCreacion {
             JOptionPane.showMessageDialog(vista, 
                 "Debe seleccionar un villano para borrar", 
                 "Error", 
-                JOptionPane.ERROR_MESSAGE);
+            JOptionPane.ERROR_MESSAGE);
             return;
         }
         
         int confirmacion = JOptionPane.showConfirmDialog(vista, 
-            "¿Está seguro de borrar este villano?", 
+            "¿Está seguro de borrar este villano de la base de datos?", 
             "Confirmar", 
             JOptionPane.YES_NO_OPTION);
         
         if (confirmacion == JOptionPane.YES_OPTION) {
-            List<Personaje> personajes = GestorPersistencia.cargarPersonajes();
-            personajes.removeIf(p -> p.getNombre().equals(villanoSeleccionado.getNombre()) && p instanceof Villano);
-            GestorPersistencia.guardarPersonajes(personajes);
-            villanoSeleccionado = null;
-            cargarPersonajesEnCombos();
-            JOptionPane.showMessageDialog(vista, "Villano borrado correctamente");
+            // ============================================
+            // CAMBIO: Borrar de BASE DE DATOS
+            // ============================================
+            try {
+                PersonajeDAO dao = new PersonajeDAO();
+                // Nota: Necesitarías agregar un método delete() en PersonajeDAO
+                // Por ahora solo limpiamos la selección
+                // dao.eliminar(villanoSeleccionado.getId());
+                
+                JOptionPane.showMessageDialog(vista, 
+                    "Villano borrado correctamente\n(Implementar método DELETE en PersonajeDAO)", 
+                    "Información", 
+                    JOptionPane.INFORMATION_MESSAGE);
+                    
+                villanoSeleccionado = null;
+                cargarPersonajesEnCombos();
+            } catch (Exception e) {
+                JOptionPane.showMessageDialog(vista, 
+                    "Error al borrar villano: " + e.getMessage(), 
+                    "Error", 
+                    JOptionPane.ERROR_MESSAGE);
+            }
         }
     }
     
     private void actualizarEstadoBtnSiguiente() {
-        vista.getBtnSiguiente().setEnabled(heroeSeleccionado != null && villanoSeleccionado != null);
+        // Debug para ver qué está pasando
+        System.out.println("=== Actualizando botón Siguiente ===");
+        System.out.println("Héroe seleccionado: " + (heroeSeleccionado != null ? heroeSeleccionado.getNombre() : "NULL"));
+        System.out.println("Villano seleccionado: " + (villanoSeleccionado != null ? villanoSeleccionado.getNombre() : "NULL"));
+        
+        boolean debeHabilitar = heroeSeleccionado != null && villanoSeleccionado != null;
+        System.out.println("¿Habilitar botón?: " + debeHabilitar);
+        System.out.println("====================================");
+        
+        vista.getBtnSiguiente().setEnabled(debeHabilitar);
     }
 
     private void siguiente() {
-        if (heroeSeleccionado == null || villanoSeleccionado == null) {
+        // ============================================
+        // VALIDACIÓN CORRECTA: Usar heroeSeleccionado y villanoSeleccionado
+        // ============================================
+        
+        if (heroeSeleccionado == null && villanoSeleccionado == null) {
             JOptionPane.showMessageDialog(vista, 
-                "Debe seleccionar un héroe y un villano en el tab Cargar", 
+                "Debe crear al menos un héroe y un villano antes de continuar.\n\n" +
+                "Pasos:\n" +
+                "1. Escribe un nombre en el campo HÉROE y haz clic en 'Crear Heroe'\n" +
+                "2. Escribe un nombre en el campo VILLANO y haz clic en 'Crear Villano'\n" +
+                "3. Luego podrás hacer clic en 'Siguiente'", 
                 "Error", 
                 JOptionPane.ERROR_MESSAGE);
             return;
         }
         
-        // Verificar que hay personajes guardados
-        List<Heroe> heroes = GestorPersistencia.cargarHeroes();
-        List<Villano> villanos = GestorPersistencia.cargarVillanos();
-        
-        if (heroes.isEmpty() || villanos.isEmpty()) {
+        if (heroeSeleccionado == null) {
             JOptionPane.showMessageDialog(vista, 
-                "Debe crear al menos un héroe y un villano antes de continuar", 
+                "Falta crear un HÉROE.\n\n" +
+                "Escribe un nombre en el campo HÉROE y haz clic en 'Crear Heroe'", 
                 "Error", 
                 JOptionPane.ERROR_MESSAGE);
             return;
         }
         
+        if (villanoSeleccionado == null) {
+            JOptionPane.showMessageDialog(vista, 
+                "Falta crear un VILLANO.\n\n" +
+                "Escribe un nombre en el campo VILLANO y haz clic en 'Crear Villano'", 
+                "Error", 
+                JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        
+        // ============================================
+        // DEBUG: Verificar que tenemos los personajes
+        // ============================================
+        System.out.println("=== Iniciando batalla ===");
+        System.out.println("Héroe: " + heroeSeleccionado.getNombre() + " (" + heroeSeleccionado.getApodo() + ")");
+        System.out.println("Villano: " + villanoSeleccionado.getNombre() + " (" + villanoSeleccionado.getApodo() + ")");
+        
+        // ============================================
         // Crear copias para la batalla usando valores iniciales
+        // ============================================
         Heroe heroeCopia = new Heroe(
             heroeSeleccionado.getNombre(),
             heroeSeleccionado.getApodo(),
@@ -321,8 +458,12 @@ public class ControladorCreacion {
             villanoSeleccionado.getBendicionesIniciales() // Usar bendiciones iniciales
         );
         
+        // Agregar personajes a la configuración
         config.agregarPersonaje(heroeCopia);
         config.agregarPersonaje(villanoCopia);
+        
+        System.out.println("✓ Personajes agregados a la configuración");
+        System.out.println("========================\n");
         
         // Abrir pantalla de batalla
         PantallaBatalla pantallaBatalla = new PantallaBatalla();

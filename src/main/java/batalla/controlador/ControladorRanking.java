@@ -1,5 +1,6 @@
 package batalla.controlador;
 
+import batalla.Conexion.PersonajeDAO;
 import batalla.modelo.GestorPersistencia;
 import batalla.vista.PantallaRanking;
 
@@ -22,33 +23,32 @@ public class ControladorRanking {
     }
 
     private void cargarRanking() {
-        List<batalla.modelo.Personaje> personajes = GestorPersistencia.cargarPersonajes();
-        
-        // Ordenar por victorias descendente
-        personajes.sort((p1, p2) -> Integer.compare(p2.getVictorias(), p1.getVictorias()));
-        
-        // Calcular total de batallas para winrate
-        int totalBatallas = personajes.stream()
-            .mapToInt(batalla.modelo.Personaje::getVictorias)
-            .sum();
-        
-        Object[][] datos = new Object[personajes.size()][6];
-        String[] columnas = {"N°", "Nombre", "Tipo", "Victorias", "Winrate (%)", "Ataques Supremos Usados"};
-        
-        for (int i = 0; i < personajes.size(); i++) {
-            batalla.modelo.Personaje p = personajes.get(i);
-            datos[i][0] = i + 1;
-            datos[i][1] = p.getNombre();
-            datos[i][2] = p.getTipo();
-            datos[i][3] = p.getVictorias();
+        try {
+            PersonajeDAO dao = new PersonajeDAO();
+            List<batalla.modelo.Personaje> personajes = dao.obtenerRanking(); // Ya está ordenado por victorias DESC
             
-            // Calcular winrate
-            double winrate = totalBatallas > 0 ? (p.getVictorias() * 100.0) / totalBatallas : 0.0;
-            datos[i][4] = String.format("%.2f", winrate);
-            datos[i][5] = p.getAtaquesSupremosUsados();
+            Object[][] datos = new Object[personajes.size()][6];
+            String[] columnas = {"N°", "Nombre", "Tipo", "Victorias", "Derrotas", "Ataques Supremos Usados"};
+            
+            for (int i = 0; i < personajes.size(); i++) {
+                batalla.modelo.Personaje p = personajes.get(i);
+                datos[i][0] = i + 1;
+                datos[i][1] = p.getNombre();
+                datos[i][2] = p.getTipo();
+                datos[i][3] = p.getVictorias();
+                datos[i][4] = p.getDerrotas();
+                datos[i][5] = p.getAtaquesSupremosUsados();
+            }
+            
+            vista.actualizarTabla(datos, columnas);
+            
+        } catch (Exception e) {
+            System.err.println("Error al cargar ranking desde BD: " + e.getMessage());
+            javax.swing.JOptionPane.showMessageDialog(vista,
+                "Error al cargar el ranking desde la base de datos",
+                "Error",
+                javax.swing.JOptionPane.ERROR_MESSAGE);
         }
-        
-        vista.actualizarTabla(datos, columnas);
     }
 
     public void iniciar() {
