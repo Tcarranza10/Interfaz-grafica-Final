@@ -313,25 +313,8 @@ public class ControladorResultado {
 
             System.out.println("✓ Validación de personajes OK");
 
-            // Determinar ganador
-            Personaje ganadorObj;
-            if (ganador != null) {
-                ganadorObj = ganador.equals(heroe.getNombre()) ? heroe : villano;
-                System.out.println("→ Ganador por string: " + ganadorObj.getNombre());
-            } else {
-                ganadorObj = heroe.getVictorias() >= villano.getVictorias() ? heroe : villano;
-                System.out.println("→ Ganador por victorias: " + ganadorObj.getNombre());
-            }
-
-            // Determinar turnos
-            int turnosGuardar = (turnos > 0) ? turnos : batallaMasLarga;
-            if (turnosGuardar == 0) {
-                turnosGuardar = 1;
-            }
-            System.out.println("→ Turnos a guardar: " + turnosGuardar);
-
             // Asegurar que los Personajes existen en la BD
-            System.out.println("\n→ Guardando personajes en BD...");
+            System.out.println("\n→ Verificando personajes en BD...");
             PersonajeDAO pdao = new PersonajeDAO();
 
             int heroeId = pdao.asegurarPersonajeEnBD(heroe);
@@ -339,18 +322,14 @@ public class ControladorResultado {
             
             int villanoId = pdao.asegurarPersonajeEnBD(villano);
             System.out.println("  Villano ID: " + villanoId);
-            
-            int ganadorId = pdao.asegurarPersonajeEnBD(ganadorObj);
-            System.out.println("  Ganador ID: " + ganadorId);
 
             // Validar IDs
-            if (heroeId <= 0 || villanoId <= 0 || ganadorId <= 0) {
+            if (heroeId <= 0 || villanoId <= 0) {
                 javax.swing.JOptionPane.showMessageDialog(vista,
                         "Error: No se pudieron registrar los personajes en la base de datos.\n\n" +
                         "IDs obtenidos:\n" +
                         "Héroe: " + heroeId + "\n" +
-                        "Villano: " + villanoId + "\n" +
-                        "Ganador: " + ganadorId,
+                        "Villano: " + villanoId,
                         "Error de Base de Datos",
                         javax.swing.JOptionPane.ERROR_MESSAGE);
                 return;
@@ -358,30 +337,29 @@ public class ControladorResultado {
 
             System.out.println("✓ IDs válidos obtenidos");
 
-            // Actualizar estadísticas
-            System.out.println("\n→ Actualizando estadísticas...");
+            // ✅ SOLO actualizar estadísticas (la batalla ya fue guardada en ControladorBatalla)
+            System.out.println("\n→ Actualizando estadísticas finales...");
             pdao.actualizarEstadisticas(heroe);
             pdao.actualizarEstadisticas(villano);
             System.out.println("✓ Estadísticas actualizadas");
 
-            // Guardar batalla
-            System.out.println("\n→ Guardando batalla...");
-            BatallaDAO batallaDAO = new BatallaDAO();
-            batallaDAO.insertarBatalla(heroe, villano, ganadorObj, turnosGuardar);
-            System.out.println("✓ Batalla guardada");
+            // ❌ NO GUARDAR LA BATALLA AQUÍ - Ya fue guardada en ControladorBatalla
+            // BatallaDAO batallaDAO = new BatallaDAO();
+            // batallaDAO.insertarBatalla(heroe, villano, ganadorObj, turnosGuardar);
 
             // Mostrar confirmación
             String mensaje = String.format(
-                "✓ Batalla guardada correctamente en la base de datos.\n\n" +
+                "✓ Estadísticas actualizadas correctamente en la base de datos.\n\n" +
                 "Detalles:\n" +
                 "• Héroe: %s (ID: %d)\n" +
+                "  - Victorias: %d | Derrotas: %d\n" +
                 "• Villano: %s (ID: %d)\n" +
-                "• Ganador: %s (ID: %d)\n" +
-                "• Turnos: %d",
+                "  - Victorias: %d | Derrotas: %d\n\n" +
+                "Nota: Las batallas ya fueron guardadas durante el combate.",
                 heroe.getNombre(), heroeId,
+                heroe.getVictorias(), heroe.getDerrotas(),
                 villano.getNombre(), villanoId,
-                ganadorObj.getNombre(), ganadorId,
-                turnosGuardar
+                villano.getVictorias(), villano.getDerrotas()
             );
 
             System.out.println("\n" + mensaje);
@@ -396,7 +374,7 @@ public class ControladorResultado {
             e.printStackTrace();
             
             javax.swing.JOptionPane.showMessageDialog(vista,
-                    "Error inesperado al guardar la batalla:\n" + e.getMessage() +
+                    "Error inesperado al guardar:\n" + e.getMessage() +
                     "\n\nDetalles técnicos:\n" + e.getClass().getName() +
                     "\n\nRevisa la consola para más información.",
                     "Error Crítico",

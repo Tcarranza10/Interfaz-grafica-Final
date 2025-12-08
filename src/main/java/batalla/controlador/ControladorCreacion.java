@@ -396,17 +396,32 @@ public class ControladorCreacion {
     }
 
     private void siguiente() {
-        // ============================================
-        // VALIDACIÓN CORRECTA: Usar heroeSeleccionado y villanoSeleccionado
-        // ============================================
+        System.out.println("=== Método siguiente() ===");
+        System.out.println("Tab actual: " + vista.getjTabbedPane1().getSelectedIndex()); // 0=Crear, 1=Cargar
         
+        // ============================================
+        // Si estamos en tab "Crear" y hay personajes creados,
+        // intentar recuperarlos de la base de datos
+        // ============================================
+        if (vista.getjTabbedPane1().getSelectedIndex() == 0) {
+            System.out.println("→ Usuario en tab CREAR, verificando personajes...");
+            
+            // Si no hay personajes seleccionados, intentar cargar los últimos creados
+            if (heroeSeleccionado == null || villanoSeleccionado == null) {
+                System.out.println("→ Intentando cargar últimos personajes de BD...");
+                cargarUltimosPersonajesCreados();
+            }
+        }
+        
+        // ============================================
+        // Validación final
+        // ============================================
         if (heroeSeleccionado == null && villanoSeleccionado == null) {
             JOptionPane.showMessageDialog(vista, 
                 "Debe crear al menos un héroe y un villano antes de continuar.\n\n" +
-                "Pasos:\n" +
-                "1. Escribe un nombre en el campo HÉROE y haz clic en 'Crear Heroe'\n" +
-                "2. Escribe un nombre en el campo VILLANO y haz clic en 'Crear Villano'\n" +
-                "3. Luego podrás hacer clic en 'Siguiente'", 
+                "Opciones:\n" +
+                "1. Tab CREAR: Crea un héroe y un villano, luego haz clic en 'Siguiente'\n" +
+                "2. Tab CARGAR: Selecciona un héroe y un villano de las listas", 
                 "Error", 
                 JOptionPane.ERROR_MESSAGE);
             return;
@@ -414,8 +429,9 @@ public class ControladorCreacion {
         
         if (heroeSeleccionado == null) {
             JOptionPane.showMessageDialog(vista, 
-                "Falta crear un HÉROE.\n\n" +
-                "Escribe un nombre en el campo HÉROE y haz clic en 'Crear Heroe'", 
+                "Falta un HÉROE.\n\n" +
+                "• En tab CREAR: Escribe un nombre y haz clic en 'Crear Heroe'\n" +
+                "• En tab CARGAR: Selecciona un héroe de la lista", 
                 "Error", 
                 JOptionPane.ERROR_MESSAGE);
             return;
@@ -423,42 +439,42 @@ public class ControladorCreacion {
         
         if (villanoSeleccionado == null) {
             JOptionPane.showMessageDialog(vista, 
-                "Falta crear un VILLANO.\n\n" +
-                "Escribe un nombre en el campo VILLANO y haz clic en 'Crear Villano'", 
+                "Falta un VILLANO.\n\n" +
+                "• En tab CREAR: Escribe un nombre y haz clic en 'Crear Villano'\n" +
+                "• En tab CARGAR: Selecciona un villano de la lista", 
                 "Error", 
                 JOptionPane.ERROR_MESSAGE);
             return;
         }
         
         // ============================================
-        // DEBUG: Verificar que tenemos los personajes
+        // DEBUG
         // ============================================
         System.out.println("=== Iniciando batalla ===");
         System.out.println("Héroe: " + heroeSeleccionado.getNombre() + " (" + heroeSeleccionado.getApodo() + ")");
         System.out.println("Villano: " + villanoSeleccionado.getNombre() + " (" + villanoSeleccionado.getApodo() + ")");
         
         // ============================================
-        // Crear copias para la batalla usando valores iniciales
+        // Crear copias para la batalla
         // ============================================
         Heroe heroeCopia = new Heroe(
             heroeSeleccionado.getNombre(),
             heroeSeleccionado.getApodo(),
-            heroeSeleccionado.getVidaMaxima(), // Usar vida inicial
+            heroeSeleccionado.getVidaMaxima(),
             heroeSeleccionado.getFuerza(),
             heroeSeleccionado.getDefensa(),
-            heroeSeleccionado.getBendicionesIniciales() // Usar bendiciones iniciales
+            heroeSeleccionado.getBendicionesIniciales()
         );
         
         Villano villanoCopia = new Villano(
             villanoSeleccionado.getNombre(),
             villanoSeleccionado.getApodo(),
-            villanoSeleccionado.getVidaMaxima(), // Usar vida inicial
+            villanoSeleccionado.getVidaMaxima(),
             villanoSeleccionado.getFuerza(),
             villanoSeleccionado.getDefensa(),
-            villanoSeleccionado.getBendicionesIniciales() // Usar bendiciones iniciales
+            villanoSeleccionado.getBendicionesIniciales()
         );
         
-        // Agregar personajes a la configuración
         config.agregarPersonaje(heroeCopia);
         config.agregarPersonaje(villanoCopia);
         
@@ -471,6 +487,57 @@ public class ControladorCreacion {
         controladorBatalla.iniciar();
         
         vista.dispose();
+    }
+
+    // ============================================
+    // NUEVO MÉTODO: Cargar últimos personajes creados
+    // ============================================
+    private void cargarUltimosPersonajesCreados() {
+        try {
+            PersonajeDAO dao = new PersonajeDAO();
+            List<Personaje> todos = dao.listarTodos();
+            
+            if (todos.isEmpty()) {
+                System.out.println("✗ No hay personajes en la BD");
+                return;
+            }
+            
+            // Buscar el último héroe y el último villano
+            Heroe ultimoHeroe = null;
+            Villano ultimoVillano = null;
+            
+            for (int i = todos.size() - 1; i >= 0; i--) {
+                Personaje p = todos.get(i);
+                
+                if (p instanceof Heroe && ultimoHeroe == null) {
+                    ultimoHeroe = (Heroe) p;
+                } else if (p instanceof Villano && ultimoVillano == null) {
+                    ultimoVillano = (Villano) p;
+                }
+                
+                // Si ya encontramos ambos, salir del bucle
+                if (ultimoHeroe != null && ultimoVillano != null) {
+                    break;
+                }
+            }
+            
+            // Asignar los personajes encontrados
+            if (heroeSeleccionado == null && ultimoHeroe != null) {
+                heroeSeleccionado = ultimoHeroe;
+                System.out.println("✓ Héroe cargado de BD: " + ultimoHeroe.getNombre());
+            }
+            
+            if (villanoSeleccionado == null && ultimoVillano != null) {
+                villanoSeleccionado = ultimoVillano;
+                System.out.println("✓ Villano cargado de BD: " + ultimoVillano.getNombre());
+            }
+            
+            // Actualizar estado del botón
+            actualizarEstadoBtnSiguiente();
+            
+        } catch (Exception e) {
+            System.err.println("✗ Error al cargar últimos personajes: " + e.getMessage());
+        }
     }
 
     private void volver() {

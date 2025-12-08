@@ -93,11 +93,9 @@ public class ControladorBatalla {
         
         actualizarEstadoPersonajes();
         
-        // ✅ CAMBIO: Iniciar el timer para ejecutar turnos con delay
         iniciarTimerTurnos();
     }
     
-    // ✅ NUEVO MÉTODO: Usar Timer de Swing
     private void iniciarTimerTurnos() {
         // Detener timer anterior si existe
         if (timer != null && timer.isRunning()) {
@@ -117,7 +115,7 @@ public class ControladorBatalla {
     private void ejecutarTurno() {
         // Verificar si la batalla terminó
         if (!heroe.estaVivo() || !villano.estaVivo()) {
-            timer.stop(); // ← Detener el timer
+            timer.stop(); 
             finalizarBatalla();
             return;
         }
