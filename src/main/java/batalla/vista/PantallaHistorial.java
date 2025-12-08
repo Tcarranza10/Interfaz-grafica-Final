@@ -99,7 +99,7 @@ public class PantallaHistorial extends javax.swing.JFrame {
             }
         });
 
-        btnCargarPartida.setText("Cargar Partida");
+        btnCargarPartida.setText("Detalle Partida");
         btnCargarPartida.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnCargarPartidaActionPerformed(evt);

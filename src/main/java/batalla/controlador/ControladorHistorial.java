@@ -84,23 +84,22 @@ public class ControladorHistorial {
             return;
         }
 
-        // Mostramos los datos de forma sencilla (después podemos hacer otra pantalla)
+        // Mostramos los datos de forma sencilla
         JOptionPane.showMessageDialog(vista,
-                "ID: " + info.getId() + "\n" +
                 "Fecha: " + info.getFecha() + "\n" +
                 "Turnos: " + info.getTurnos() + "\n\n" +
                 "HÉROE:\n" +
-                "ID: " + info.getHeroeId() + "\n" +
+
                 "Nombre: " + info.getHeroeNombre() + "\n" +
                 "Apodo: " + info.getHeroeApodo() + "\n" +
                 "Vida final: " + info.getHeroeVidaFinal() + "\n\n" +
                 "VILLANO:\n" +
-                "ID: " + info.getVillanoId() + "\n" +
+
                 "Nombre: " + info.getVillanoNombre() + "\n" +
                 "Apodo: " + info.getVillanoApodo() + "\n" +
                 "Vida final: " + info.getVillanoVidaFinal() + "\n\n" +
                 "GANADOR:\n" +
-                "ID: " + info.getGanadorId() + "\n" +
+
                 "Nombre: " + info.getGanadorNombre(),
                 "Detalle de Batalla",
                 JOptionPane.INFORMATION_MESSAGE

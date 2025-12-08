@@ -13,8 +13,8 @@ public class PersonajeDAO {
     // INSERT - Agregar un personaje nuevo
     public void insertar(Personaje p) {
         String sql = "INSERT INTO personajes "
-                    + "(nombre, apodo, tipo, vida_final, fuerza, defensa, bendiciones, victorias, derrotas, supremos_usados, armas_invocadas) "
-                    + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                    + "(nombre, apodo, tipo, vida_final, vida_inicial, fuerza, defensa, bendiciones, victorias, derrotas, supremos_usados, armas_invocadas) "
+                    + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         try (Connection conn = ConexionSQLite.conectar();
             PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -22,14 +22,15 @@ public class PersonajeDAO {
             ps.setString(1, p.getNombre());
             ps.setString(2, p.getApodo());
             ps.setString(3, p.getTipo());
-            ps.setInt(4, p.getVida());
-            ps.setInt(5, p.getFuerza());      // ✅ NUEVO
-            ps.setInt(6, p.getDefensa());     // ✅ NUEVO
-            ps.setInt(7, p.getBendiciones()); // ✅ NUEVO
-            ps.setInt(8, p.getVictorias());
-            ps.setInt(9, p.getDerrotas());
-            ps.setInt(10, p.getAtaquesSupremosUsados());
-            ps.setInt(11, p.getArmasInvocadas());
+            ps.setInt(4, p.getVida());           // vida_final
+            ps.setInt(5, p.getVidaMaxima());     // vida_inicial
+            ps.setInt(6, p.getFuerza());
+            ps.setInt(7, p.getDefensa());
+            ps.setInt(8, p.getBendiciones());
+            ps.setInt(9, p.getVictorias());
+            ps.setInt(10, p.getDerrotas());
+            ps.setInt(11, p.getAtaquesSupremosUsados());
+            ps.setInt(12, p.getArmasInvocadas());
 
             ps.executeUpdate();
 
@@ -130,35 +131,38 @@ public class PersonajeDAO {
 
     // MÉTODO PRIVADO - Convertir fila SQL → Objeto Personaje
     private Personaje mapearPersonaje(ResultSet rs) throws SQLException {
-            Personaje p;
+        Personaje p;
         
-            if ("Heroe".equals(rs.getString("tipo"))) {
-                p = new Heroe(
-                    rs.getString("nombre"),
-                    rs.getString("apodo"),
-                    rs.getInt("vida_final"),
-                    rs.getInt("fuerza"),      // ✅ Ahora sí viene de BD
-                    rs.getInt("defensa"),     // ✅ Ahora sí viene de BD
-                    rs.getInt("bendiciones")  // ✅ Ahora sí viene de BD
-                );
-            } else {
-                p = new Villano(
-                    rs.getString("nombre"),
-                    rs.getString("apodo"),
-                    rs.getInt("vida_final"),
-                    rs.getInt("fuerza"),
-                    rs.getInt("defensa"),
-                    rs.getInt("bendiciones")
-                );
-            }
+        // ✅ Usar vida_inicial para crear el personaje
+        int vidaInicial = rs.getInt("vida_inicial");
+        
+        if ("Heroe".equals(rs.getString("tipo"))) {
+            p = new Heroe(
+                rs.getString("nombre"),
+                rs.getString("apodo"),
+                vidaInicial,                   // ✅ vida_inicial
+                rs.getInt("fuerza"),
+                rs.getInt("defensa"),
+                rs.getInt("bendiciones")
+            );
+        } else {
+            p = new Villano(
+                rs.getString("nombre"),
+                rs.getString("apodo"),
+                vidaInicial,                   // ✅ vida_inicial
+                rs.getInt("fuerza"),
+                rs.getInt("defensa"),
+                rs.getInt("bendiciones")
+            );
+        }
 
-            p.setId(rs.getInt("id"));
-            p.setVictorias(rs.getInt("victorias"));
-            p.setDerrotas(rs.getInt("derrotas"));
-            p.setAtaquesSupremosUsados(rs.getInt("supremos_usados"));
-            p.setArmasInvocadas(rs.getInt("armas_invocadas"));
+        p.setId(rs.getInt("id"));
+        p.setVictorias(rs.getInt("victorias"));
+        p.setDerrotas(rs.getInt("derrotas"));
+        p.setAtaquesSupremosUsados(rs.getInt("supremos_usados"));
+        p.setArmasInvocadas(rs.getInt("armas_invocadas"));
 
-            return p;
+        return p;
     }
 
     // ================================================================
@@ -175,7 +179,7 @@ public class PersonajeDAO {
         String sqlBuscar = "SELECT id FROM personajes WHERE apodo = ? LIMIT 1";
 
         try (Connection conn = ConexionSQLite.conectar();
-             PreparedStatement ps = conn.prepareStatement(sqlBuscar)) {
+            PreparedStatement ps = conn.prepareStatement(sqlBuscar)) {
 
             ps.setString(1, p.getApodo());
 
@@ -192,20 +196,24 @@ public class PersonajeDAO {
 
         // 2) SI NO EXISTE → INSERTARLO
         String sqlInsert = "INSERT INTO personajes "
-                + "(nombre, apodo, tipo, vida_final, victorias, derrotas, supremos_usados, armas_invocadas) "
-                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+                + "(nombre, apodo, tipo, vida_final, vida_inicial, fuerza, defensa, bendiciones, victorias, derrotas, supremos_usados, armas_invocadas) "
+                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         try (Connection conn = ConexionSQLite.conectar();
-             PreparedStatement ps = conn.prepareStatement(sqlInsert, Statement.RETURN_GENERATED_KEYS)) {
+            PreparedStatement ps = conn.prepareStatement(sqlInsert, Statement.RETURN_GENERATED_KEYS)) {
 
             ps.setString(1, p.getNombre());
             ps.setString(2, p.getApodo());
             ps.setString(3, p.getTipo());
-            ps.setInt(4, p.getVida());
-            ps.setInt(5, p.getVictorias());
-            ps.setInt(6, p.getDerrotas());
-            ps.setInt(7, p.getAtaquesSupremosUsados());
-            ps.setInt(8, p.getArmasInvocadas());
+            ps.setInt(4, p.getVida());           // vida_final
+            ps.setInt(5, p.getVidaMaxima());     // vida_inicial
+            ps.setInt(6, p.getFuerza());
+            ps.setInt(7, p.getDefensa());
+            ps.setInt(8, p.getBendiciones());
+            ps.setInt(9, p.getVictorias());
+            ps.setInt(10, p.getDerrotas());
+            ps.setInt(11, p.getAtaquesSupremosUsados());
+            ps.setInt(12, p.getArmasInvocadas());
 
             ps.executeUpdate();
 
@@ -218,6 +226,7 @@ public class PersonajeDAO {
 
         } catch (SQLException e) {
             System.err.println("Error al insertar personaje: " + e.getMessage());
+            e.printStackTrace(); // Ver el error completo
         }
 
         return -1;

@@ -1,2 +1,2 @@
-Sorex|Sorex El Poderoso|Heroe|130|15|9|68|0|0|1
-Maru|Maru El Sabio|Villano|116|23|10|100|1|0|1
+Sorex|Sorex El Poderoso|Heroe|100|15|9|78|0|0|1
+Jorch|Jorch El Oscuro|Villano|118|23|8|0|1|1|1

@@ -114,7 +114,6 @@ public class ControladorBatalla {
         timer.start();
     }
     
-    // ✅ RENOMBRADO: De siguienteTurno() a ejecutarTurno()
     private void ejecutarTurno() {
         // Verificar si la batalla terminó
         if (!heroe.estaVivo() || !villano.estaVivo()) {
