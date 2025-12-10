@@ -249,7 +249,7 @@ public class PantallaHistorial extends javax.swing.JFrame {
      * Devuelve el botón borrar partida (usado por el controlador).
      */
     public javax.swing.JButton getBtnBorrarPartida() {
-        return btnRefrescar;
+        return btnBorrarPartida1;
     }
 
     /**
@@ -266,16 +266,7 @@ public class PantallaHistorial extends javax.swing.JFrame {
 
     // Método para que el controlador acceda al botón
     public javax.swing.JButton getBtnRefrescar() {
-        // Buscar el botón por texto
-        for (java.awt.Component comp : jPanel2.getComponents()) {
-            if (comp instanceof javax.swing.JButton) {
-                javax.swing.JButton btn = (javax.swing.JButton) comp;
-                if (btn.getText().contains("Refrescar")) {
-                    return btn;
-                }
-            }
-        }
-        return null;
+        return btnRefrescar;
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
