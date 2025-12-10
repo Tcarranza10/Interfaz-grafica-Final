@@ -35,7 +35,8 @@ public class PantallaHistorial extends javax.swing.JFrame {
         jTable1 = new javax.swing.JTable();
         btnVolver = new javax.swing.JButton();
         btnCargarPartida = new javax.swing.JButton();
-        btnBorrarPartida = new javax.swing.JButton();
+        btnRefrescar = new javax.swing.JButton();
+        btnBorrarPartida1 = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -106,10 +107,17 @@ public class PantallaHistorial extends javax.swing.JFrame {
             }
         });
 
-        btnBorrarPartida.setText("Borrar Partida");
-        btnBorrarPartida.addActionListener(new java.awt.event.ActionListener() {
+        btnRefrescar.setText("Actualizar");
+        btnRefrescar.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnBorrarPartidaActionPerformed(evt);
+                btnRefrescarActionPerformed(evt);
+            }
+        });
+
+        btnBorrarPartida1.setText("Borrar Partida");
+        btnBorrarPartida1.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnBorrarPartida1ActionPerformed(evt);
             }
         });
 
@@ -123,8 +131,10 @@ public class PantallaHistorial extends javax.swing.JFrame {
                     .addGroup(jPanel2Layout.createSequentialGroup()
                         .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addComponent(btnVolver)
-                        .addGap(16, 16, 16)
-                        .addComponent(btnBorrarPartida)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(btnRefrescar)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(btnBorrarPartida1)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(btnCargarPartida)
                         .addGap(14, 14, 14)))
@@ -139,7 +149,8 @@ public class PantallaHistorial extends javax.swing.JFrame {
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(btnVolver)
                     .addComponent(btnCargarPartida)
-                    .addComponent(btnBorrarPartida))
+                    .addComponent(btnRefrescar)
+                    .addComponent(btnBorrarPartida1))
                 .addGap(29, 29, 29))
         );
 
@@ -173,9 +184,13 @@ public class PantallaHistorial extends javax.swing.JFrame {
         // TODO add your handling code here:
     }//GEN-LAST:event_btnCargarPartidaActionPerformed
 
-    private void btnBorrarPartidaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnBorrarPartidaActionPerformed
+    private void btnRefrescarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnRefrescarActionPerformed
         // TODO add your handling code here:
-    }//GEN-LAST:event_btnBorrarPartidaActionPerformed
+    }//GEN-LAST:event_btnRefrescarActionPerformed
+
+    private void btnBorrarPartida1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnBorrarPartida1ActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_btnBorrarPartida1ActionPerformed
 
     /**
      * @param args the command line arguments
@@ -233,7 +248,7 @@ public class PantallaHistorial extends javax.swing.JFrame {
      * Devuelve el botón borrar partida (usado por el controlador).
      */
     public javax.swing.JButton getBtnBorrarPartida() {
-        return btnBorrarPartida;
+        return btnRefrescar;
     }
 
     /**
@@ -247,10 +262,34 @@ public class PantallaHistorial extends javax.swing.JFrame {
         return jTable1;
     }
 
+    private void agregarBotonRefrescar() {
+        javax.swing.JButton btnRefrescar = new javax.swing.JButton("Refrescar");
+        btnRefrescar.setToolTipText("Recargar datos desde la base de datos");
+        
+        // Agregar al panel de botones (junto a Volver, Cargar Partida, etc.)
+        jPanel2.add(btnRefrescar);
+        
+        // No necesita event handler aquí, se configura en el controlador
+    }
+
+    // Método para que el controlador acceda al botón
+    public javax.swing.JButton getBtnRefrescar() {
+        // Buscar el botón por texto
+        for (java.awt.Component comp : jPanel2.getComponents()) {
+            if (comp instanceof javax.swing.JButton) {
+                javax.swing.JButton btn = (javax.swing.JButton) comp;
+                if (btn.getText().contains("Refrescar")) {
+                    return btn;
+                }
+            }
+        }
+        return null;
+    }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JButton btnBorrarPartida;
+    private javax.swing.JButton btnBorrarPartida1;
     private javax.swing.JButton btnCargarPartida;
+    private javax.swing.JButton btnRefrescar;
     private javax.swing.JButton btnVolver;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JPanel jPanel1;

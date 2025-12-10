@@ -25,7 +25,41 @@ public class ControladorHistorial {
         vista.getBtnVolver().addActionListener(e -> volver());
         vista.getBtnBorrarPartida().addActionListener(e -> borrarPartida());
         vista.getBtnCargarPartida().addActionListener(e -> cargarPartida());
+
+        javax.swing.JButton btnRefrescar = vista.getBtnRefrescar();
+        if (btnRefrescar != null) {
+            btnRefrescar.addActionListener(e -> refrescarDatos());
+        }
     }
+
+    private void refrescarDatos() {
+        System.out.println("→ Refrescando datos desde la base de datos...");
+        
+        try {
+            cargarTabla();
+            
+            JOptionPane.showMessageDialog(
+                vista,
+                "✓ Datos actualizados correctamente desde la base de datos",
+                "Actualización Exitosa",
+                JOptionPane.INFORMATION_MESSAGE
+            );
+            
+            System.out.println("✓ Datos refrescados correctamente");
+            
+        } catch (Exception e) {
+            System.err.println("✗ Error al refrescar datos: " + e.getMessage());
+            e.printStackTrace();
+            
+            JOptionPane.showMessageDialog(
+                vista,
+                "Error al actualizar los datos:\n" + e.getMessage(),
+                "Error de Actualización",
+                JOptionPane.ERROR_MESSAGE
+            );
+        }
+    }
+
 
     // ============================================================
     // 1) Cargar el historial desde la base de datos

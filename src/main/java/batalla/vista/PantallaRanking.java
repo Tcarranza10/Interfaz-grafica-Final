@@ -9,6 +9,7 @@ public class PantallaRanking extends javax.swing.JFrame {
     private javax.swing.JTable tablaRanking;
     private javax.swing.JScrollPane scrollTabla;
     private javax.swing.JButton btnVolver;
+    private javax.swing.JButton btnRefrescar;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JPanel jPanel1;
 
@@ -23,6 +24,7 @@ public class PantallaRanking extends javax.swing.JFrame {
         scrollTabla = new javax.swing.JScrollPane();
         tablaRanking = new javax.swing.JTable();
         btnVolver = new javax.swing.JButton();
+        btnRefrescar = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
 
@@ -37,6 +39,8 @@ public class PantallaRanking extends javax.swing.JFrame {
         scrollTabla.setViewportView(tablaRanking);
 
         btnVolver.setText("Volver");
+        btnRefrescar.setText("Refrescar");
+        btnRefrescar.setToolTipText("Recargar ranking desde la base de datos");
 
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
@@ -66,6 +70,8 @@ public class PantallaRanking extends javax.swing.JFrame {
                     .addComponent(scrollTabla, javax.swing.GroupLayout.DEFAULT_SIZE, 600, Short.MAX_VALUE)
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                         .addGap(0, 0, Short.MAX_VALUE)
+                        .addComponent(btnRefrescar)
+                        
                         .addComponent(btnVolver)))
                 .addContainerGap())
         );
@@ -77,6 +83,7 @@ public class PantallaRanking extends javax.swing.JFrame {
                 .addComponent(scrollTabla, javax.swing.GroupLayout.DEFAULT_SIZE, 300, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(btnVolver)
+                .addComponent(btnRefrescar))
                 .addContainerGap())
         );
 
@@ -90,5 +97,9 @@ public class PantallaRanking extends javax.swing.JFrame {
 
     public javax.swing.JButton getBtnVolver() {
         return btnVolver;
+    }
+
+    public javax.swing.JButton getBtnRefrescar() {
+        return btnRefrescar;
     }
 }
