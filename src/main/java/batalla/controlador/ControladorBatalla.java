@@ -254,6 +254,29 @@ public class ControladorBatalla {
                 BatallaDAO batallaDAO = new BatallaDAO();
                 batallaDAO.insertarBatalla(heroe, villano, ganador, turnos);
                 
+                // Obtener el ID de la última batalla insertada
+                int idBatalla = batallaDAO.obtenerUltimoIdBatalla();
+                
+                // Guardar los eventos del combat log
+                if (idBatalla > 0) {
+                    for (String evento : combatLog) {
+                        batallaDAO.guardarEventoCombate(idBatalla, evento);
+                    }
+                    System.out.println("✓ Combat log guardado (" + combatLog.size() + " eventos)");
+                    
+                    // Guardar estadísticas
+                    batallaDAO.guardarEstadisticasBatalla(
+                        idBatalla,
+                        mayorDanio,
+                        personajeMayorDanio,
+                        heroe.getArmasInvocadas(),
+                        villano.getArmasInvocadas(),
+                        heroe.getAtaquesSupremosUsados(),
+                        villano.getAtaquesSupremosUsados()
+                    );
+                    System.out.println("✓ Estadísticas guardadas");
+                }
+                
                 System.out.println("✓ Batalla guardada en BD correctamente");
             } else {
                 System.err.println("✗ Error: IDs inválidos");

@@ -92,7 +92,25 @@ public class ControladorHistorial {
                     JOptionPane.ERROR_MESSAGE);
             return;
         }
-        // ... resto del código ...
+        
+        int idBatalla = Integer.parseInt(
+                vista.getTable().getValueAt(fila, 0).toString()
+        );
+        
+        // Obtener información de la batalla desde la BD
+        BatallaDAO.BatallaInfo info = batallaDAO.obtenerBatallaPorId(idBatalla);
+        
+        if (info == null) {
+            JOptionPane.showMessageDialog(vista,
+                    "No se pudo cargar la información de la batalla.",
+                    "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        
+        // Abrir formulario de detalles
+        batalla.vista.formHistorial detallePartida = new batalla.vista.formHistorial();
+        batalla.controlador.ControladorFormHistorial controlador = new batalla.controlador.ControladorFormHistorial(detallePartida, info);
+        controlador.iniciar();
     }
 
     private void borrarPartida() {

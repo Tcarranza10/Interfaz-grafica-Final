@@ -22,8 +22,6 @@ public class formHistorial extends javax.swing.JFrame {
     private javax.swing.JLabel lblArmasVillano;
     private javax.swing.JLabel lblSupremosHeroe;
     private javax.swing.JLabel lblSupremosVillano;
-    private javax.swing.JLabel lblWinrateHeroe;
-    private javax.swing.JLabel lblWinrateVillano;
 
     public formHistorial() {
         initComponents();
@@ -43,8 +41,6 @@ public class formHistorial extends javax.swing.JFrame {
         lblArmasVillano = new javax.swing.JLabel();
         lblSupremosHeroe = new javax.swing.JLabel();
         lblSupremosVillano = new javax.swing.JLabel();
-        lblWinrateHeroe = new javax.swing.JLabel();
-        lblWinrateVillano = new javax.swing.JLabel();
         btnCerrar = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
@@ -90,10 +86,6 @@ public class formHistorial extends javax.swing.JFrame {
 
         lblSupremosVillano.setText("Ataques supremos ejecutados villano: -");
 
-        lblWinrateHeroe.setText("Winrate héroe: -");
-
-        lblWinrateVillano.setText("Winrate villano: -");
-
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
         jPanel2Layout.setHorizontalGroup(
@@ -107,9 +99,7 @@ public class formHistorial extends javax.swing.JFrame {
                     .addComponent(lblArmasHeroe)
                     .addComponent(lblArmasVillano)
                     .addComponent(lblSupremosHeroe)
-                    .addComponent(lblSupremosVillano)
-                    .addComponent(lblWinrateHeroe)
-                    .addComponent(lblWinrateVillano))
+                    .addComponent(lblSupremosVillano))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         jPanel2Layout.setVerticalGroup(
@@ -129,10 +119,6 @@ public class formHistorial extends javax.swing.JFrame {
                 .addComponent(lblSupremosHeroe)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(lblSupremosVillano)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(lblWinrateHeroe)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(lblWinrateVillano)
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
@@ -142,15 +128,15 @@ public class formHistorial extends javax.swing.JFrame {
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addGroup(jPanel1Layout.createSequentialGroup()
+                .addGap(20, 20, 20)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jLabel1)
                     .addComponent(lblHeroeHeader)
                     .addComponent(lblVillanoHeader)
                     .addComponent(lblGanadorHeader)
                     .addComponent(lblTurnosHeader))
-                .addGap(200, 200, 200))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -179,10 +165,10 @@ public class formHistorial extends javax.swing.JFrame {
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(scrollCombatLog, javax.swing.GroupLayout.PREFERRED_SIZE, 400, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addGap(0, 0, Short.MAX_VALUE)
-                        .addComponent(btnCerrar)))
+                        .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, 350, Short.MAX_VALUE))
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(btnCerrar)
+                        .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -227,14 +213,6 @@ public class formHistorial extends javax.swing.JFrame {
 
     public void setSupremosVillano(String texto) {
         lblSupremosVillano.setText("Ataques supremos ejecutados villano: " + texto);
-    }
-
-    public void setWinrateHeroe(String texto) {
-        lblWinrateHeroe.setText("Winrate héroe: " + texto);
-    }
-
-    public void setWinrateVillano(String texto) {
-        lblWinrateVillano.setText("Winrate villano: " + texto);
     }
 
     public javax.swing.JButton getBtnCerrar() {

@@ -162,8 +162,9 @@ public class BatallaDAO {
                     info.setGanadorId(rs.getInt("ganador_id"));
                     info.setGanadorNombre(rs.getString("ganador_nombre"));
 
-                    // Nota: el combat log no se almacena en la tabla batallas por defecto.
-                    // Si querés guardar el combatLog, debemos crear la tabla eventos_batalla u otra solución.
+                    // Obtener estadísticas
+                    obtenerEstadisticasBatalla(info);
+                    
                     return info;
                 }
             }
@@ -193,6 +194,185 @@ public class BatallaDAO {
     }
 
     // ---------------- Clase auxiliar para devolver detalles de batalla ----------------
+    /**
+     * Obtiene el último ID de batalla insertado
+     */
+    public int obtenerUltimoIdBatalla() {
+        String sql = "SELECT MAX(id) as id FROM batallas";
+        
+        try (Connection conn = ConexionSQLite.conectar();
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+            
+            if (rs.next()) {
+                return rs.getInt("id");
+            }
+        } catch (SQLException e) {
+            System.err.println("Error al obtener último ID de batalla: " + e.getMessage());
+        }
+        
+        return -1;
+    }
+
+    /**
+     * Guarda un evento de combate para una batalla específica
+     */
+    public void guardarEventoCombate(int idBatalla, String evento) {
+        String sql = "INSERT INTO eventos_batalla (id_batalla, evento, timestamp) VALUES (?, ?, datetime('now'))";
+        
+        try (Connection conn = ConexionSQLite.conectar();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            
+            ps.setInt(1, idBatalla);
+            ps.setString(2, evento);
+            ps.executeUpdate();
+            
+        } catch (SQLException e) {
+            // Si la tabla no existe, intentar crearla
+            if (e.getMessage().contains("no such table")) {
+                crearTablaCombatLog();
+                guardarEventoCombate(idBatalla, evento); // Reintentar
+            } else {
+                System.err.println("Error al guardar evento: " + e.getMessage());
+            }
+        }
+    }
+    
+    /**
+     * Obtiene todos los eventos de una batalla
+     */
+    public List<String> obtenerCombatLog(int idBatalla) {
+        List<String> eventos = new ArrayList<>();
+        String sql = "SELECT evento FROM eventos_batalla WHERE id_batalla = ? ORDER BY id ASC";
+        
+        try (Connection conn = ConexionSQLite.conectar();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            
+            ps.setInt(1, idBatalla);
+            ResultSet rs = ps.executeQuery();
+            
+            while (rs.next()) {
+                eventos.add(rs.getString("evento"));
+            }
+            rs.close();
+            
+        } catch (SQLException e) {
+            System.err.println("Error al obtener combat log: " + e.getMessage());
+        }
+        
+        return eventos;
+    }
+    
+    /**
+     * Guarda estadísticas de una batalla
+     */
+    public void guardarEstadisticasBatalla(int idBatalla, int mayorDanio, String personajeMayorDanio,
+                                           int armasHero, int armasVillano,
+                                           int supremosHero, int supremosVillano) {
+        String sql = "INSERT INTO estadisticas_batalla (id_batalla, mayor_danio, personaje_mayor_danio, " +
+                     "armas_heroe, armas_villano, supremos_heroe, supremos_villano) " +
+                     "VALUES (?, ?, ?, ?, ?, ?, ?)";
+        
+        try (Connection conn = ConexionSQLite.conectar();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            
+            ps.setInt(1, idBatalla);
+            ps.setInt(2, mayorDanio);
+            ps.setString(3, personajeMayorDanio);
+            ps.setInt(4, armasHero);
+            ps.setInt(5, armasVillano);
+            ps.setInt(6, supremosHero);
+            ps.setInt(7, supremosVillano);
+            ps.executeUpdate();
+            
+        } catch (SQLException e) {
+            // Si la tabla no existe, intentar crearla
+            if (e.getMessage().contains("no such table")) {
+                crearTablaEstadisticas();
+                guardarEstadisticasBatalla(idBatalla, mayorDanio, personajeMayorDanio,
+                                          armasHero, armasVillano, supremosHero, supremosVillano);
+            } else {
+                System.err.println("Error al guardar estadísticas: " + e.getMessage());
+            }
+        }
+    }
+    
+    /**
+     * Obtiene las estadísticas de una batalla
+     */
+    public void obtenerEstadisticasBatalla(BatallaInfo info) {
+        String sql = "SELECT mayor_danio, personaje_mayor_danio, armas_heroe, armas_villano, " +
+                     "supremos_heroe, supremos_villano FROM estadisticas_batalla WHERE id_batalla = ?";
+        
+        try (Connection conn = ConexionSQLite.conectar();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            
+            ps.setInt(1, info.getId());
+            ResultSet rs = ps.executeQuery();
+            
+            if (rs.next()) {
+                info.setMayorDanio(rs.getInt("mayor_danio"));
+                info.setPersonajeMayorDanio(rs.getString("personaje_mayor_danio"));
+                info.setHeroeArmasInvocadas(rs.getInt("armas_heroe"));
+                info.setVillanoArmasInvocadas(rs.getInt("armas_villano"));
+                info.setHeroeSupremosUsados(rs.getInt("supremos_heroe"));
+                info.setVillanoSupremosUsados(rs.getInt("supremos_villano"));
+            }
+            rs.close();
+            
+        } catch (SQLException e) {
+            System.err.println("Error al obtener estadísticas: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * Crea la tabla de estadísticas de batalla
+     */
+    private void crearTablaEstadisticas() {
+        String sql = "CREATE TABLE IF NOT EXISTS estadisticas_batalla (" +
+                     "id INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                     "id_batalla INTEGER NOT NULL UNIQUE, " +
+                     "mayor_danio INTEGER DEFAULT 0, " +
+                     "personaje_mayor_danio TEXT, " +
+                     "armas_heroe INTEGER DEFAULT 0, " +
+                     "armas_villano INTEGER DEFAULT 0, " +
+                     "supremos_heroe INTEGER DEFAULT 0, " +
+                     "supremos_villano INTEGER DEFAULT 0, " +
+                     "FOREIGN KEY (id_batalla) REFERENCES batallas(id) ON DELETE CASCADE)";
+        
+        try (Connection conn = ConexionSQLite.conectar();
+             Statement stmt = conn.createStatement()) {
+            
+            stmt.execute(sql);
+            System.out.println("✓ Tabla estadisticas_batalla creada correctamente");
+            
+        } catch (SQLException e) {
+            System.err.println("Error al crear tabla estadísticas: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * Crea la tabla de eventos de batalla si no existe
+     */
+    private void crearTablaCombatLog() {
+        String sql = "CREATE TABLE IF NOT EXISTS eventos_batalla (" +
+                     "id INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                     "id_batalla INTEGER NOT NULL, " +
+                     "evento TEXT NOT NULL, " +
+                     "timestamp DATETIME DEFAULT CURRENT_TIMESTAMP, " +
+                     "FOREIGN KEY (id_batalla) REFERENCES batallas(id) ON DELETE CASCADE)";
+        
+        try (Connection conn = ConexionSQLite.conectar();
+             Statement stmt = conn.createStatement()) {
+            
+            stmt.execute(sql);
+            System.out.println("✓ Tabla eventos_batalla creada correctamente");
+            
+        } catch (SQLException e) {
+            System.err.println("Error al crear tabla eventos_batalla: " + e.getMessage());
+        }
+    }
+
     public static class BatallaInfo {
         private int id;
         private String fecha;
@@ -202,14 +382,21 @@ public class BatallaDAO {
         private String heroeNombre;
         private String heroeApodo;
         private int heroeVidaFinal;
+        private int heroeArmasInvocadas;
+        private int heroeSupremosUsados;
 
         private int villanoId;
         private String villanoNombre;
         private String villanoApodo;
         private int villanoVidaFinal;
+        private int villanoArmasInvocadas;
+        private int villanoSupremosUsados;
 
         private int ganadorId;
         private String ganadorNombre;
+        
+        private int mayorDanio;
+        private String personajeMayorDanio;
 
         // getters / setters
         public int getId() { return id; }
@@ -227,6 +414,10 @@ public class BatallaDAO {
         public void setHeroeApodo(String heroeApodo) { this.heroeApodo = heroeApodo; }
         public int getHeroeVidaFinal() { return heroeVidaFinal; }
         public void setHeroeVidaFinal(int heroeVidaFinal) { this.heroeVidaFinal = heroeVidaFinal; }
+        public int getHeroeArmasInvocadas() { return heroeArmasInvocadas; }
+        public void setHeroeArmasInvocadas(int heroeArmasInvocadas) { this.heroeArmasInvocadas = heroeArmasInvocadas; }
+        public int getHeroeSupremosUsados() { return heroeSupremosUsados; }
+        public void setHeroeSupremosUsados(int heroeSupremosUsados) { this.heroeSupremosUsados = heroeSupremosUsados; }
 
         public int getVillanoId() { return villanoId; }
         public void setVillanoId(int villanoId) { this.villanoId = villanoId; }
@@ -236,10 +427,19 @@ public class BatallaDAO {
         public void setVillanoApodo(String villanoApodo) { this.villanoApodo = villanoApodo; }
         public int getVillanoVidaFinal() { return villanoVidaFinal; }
         public void setVillanoVidaFinal(int villanoVidaFinal) { this.villanoVidaFinal = villanoVidaFinal; }
+        public int getVillanoArmasInvocadas() { return villanoArmasInvocadas; }
+        public void setVillanoArmasInvocadas(int villanoArmasInvocadas) { this.villanoArmasInvocadas = villanoArmasInvocadas; }
+        public int getVillanoSupremosUsados() { return villanoSupremosUsados; }
+        public void setVillanoSupremosUsados(int villanoSupremosUsados) { this.villanoSupremosUsados = villanoSupremosUsados; }
 
         public int getGanadorId() { return ganadorId; }
         public void setGanadorId(int ganadorId) { this.ganadorId = ganadorId; }
         public String getGanadorNombre() { return ganadorNombre; }
         public void setGanadorNombre(String ganadorNombre) { this.ganadorNombre = ganadorNombre; }
+        
+        public int getMayorDanio() { return mayorDanio; }
+        public void setMayorDanio(int mayorDanio) { this.mayorDanio = mayorDanio; }
+        public String getPersonajeMayorDanio() { return personajeMayorDanio; }
+        public void setPersonajeMayorDanio(String personajeMayorDanio) { this.personajeMayorDanio = personajeMayorDanio; }
     }
 }

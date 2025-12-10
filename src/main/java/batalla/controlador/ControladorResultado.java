@@ -95,6 +95,62 @@ public class ControladorResultado {
         mostrarResultados();
     }
     
+    // Constructor para cargar batalla por ID desde historial
+    public ControladorResultado(PantallaResultado vista, int idBatalla) {
+        this.vista = vista;
+        cargarBatallaDelHistorial(idBatalla);
+        configurarEventos();
+    }
+    
+    /**
+     * Carga los detalles de una batalla desde la base de datos
+     */
+    private void cargarBatallaDelHistorial(int idBatalla) {
+        try {
+            System.out.println("→ Cargando batalla #" + idBatalla + " desde la BD...");
+            
+            BatallaDAO batallaDAO = new BatallaDAO();
+            batalla.Conexion.ConexionSQLite conexion = new batalla.Conexion.ConexionSQLite();
+            java.sql.Connection conn = conexion.conectar();
+            
+            String query = "SELECT heroe, villano, ganador, turnos FROM batallas WHERE id = ?";
+            java.sql.PreparedStatement ps = conn.prepareStatement(query);
+            ps.setInt(1, idBatalla);
+            java.sql.ResultSet rs = ps.executeQuery();
+            
+            if (rs.next()) {
+                String nombreHeroe = rs.getString("heroe");
+                String nombreVillano = rs.getString("villano");
+                String ganador = rs.getString("ganador");
+                int turnos = rs.getInt("turnos");
+                
+                System.out.println("  ✓ Batalla encontrada: " + nombreHeroe + " vs " + nombreVillano);
+                System.out.println("  ✓ Ganador: " + ganador + " en " + turnos + " turnos");
+                
+                // Cargar personajes desde la BD usando apodo
+                PersonajeDAO personajeDAO = new PersonajeDAO();
+                this.heroe = (Heroe) personajeDAO.obtenerPorApodo(nombreHeroe);
+                this.villano = (Villano) personajeDAO.obtenerPorApodo(nombreVillano);
+                this.ganador = ganador;
+                this.turnos = turnos;
+                
+                System.out.println("  ✓ Personajes cargados. Mostrando resultados...");
+                mostrarResultados();
+                System.out.println("  ✓ Resultados mostrados correctamente");
+            } else {
+                System.err.println("✗ Batalla #" + idBatalla + " no encontrada en la BD");
+            }
+            
+            rs.close();
+            ps.close();
+            conn.close();
+            
+        } catch (Exception e) {
+            System.err.println("✗ Error al cargar batalla del historial: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+    
     /**
      * Extrae héroe y villano de la lista de personajes
      */
@@ -141,38 +197,20 @@ public class ControladorResultado {
     }
 
     private void mostrarResultados() {
-        vista.limpiar();
-        
-        // Mostrar resultado de la batalla
-        vista.agregarResultado("=== RESULTADO DE LA BATALLA ===");
-        vista.agregarResultado("");
-        vista.agregarResultado("Ganador: " + ganador);
-        vista.agregarResultado("Turnos totales: " + turnos);
-        vista.agregarResultado("");
-        vista.agregarResultado("Estadísticas finales:");
-        vista.agregarResultado(heroe.getNombre() + ": " + heroe.getVida() + " vida restante");
-        vista.agregarResultado(villano.getNombre() + ": " + villano.getVida() + " vida restante");
-        vista.agregarResultado("");
-        
-        // Mostrar armas utilizadas
-        vista.agregarResultado("Armas utilizadas:");
-        if (heroe.getArma() != null) {
-            vista.agregarResultado(heroe.getNombre() + ": " + heroe.getArma().getNombre());
-        } else {
-            vista.agregarResultado(heroe.getNombre() + ": Ninguna");
+        if (heroe == null || villano == null || ganador == null) {
+            System.err.println("Error: Datos incompletos para mostrar resultados");
+            return;
         }
         
-        if (villano.getArma() != null) {
-            vista.agregarResultado(villano.getNombre() + ": " + villano.getArma().getNombre());
-        } else {
-            vista.agregarResultado(villano.getNombre() + ": Ninguna");
-        }
+        // Crear datos para la tabla
+        Object[][] datos = {
+            {"-", heroe.getNombre(), villano.getNombre(), ganador, turnos}
+        };
         
-        // Mostrar historial (simplificado)
-        vista.agregarHistorial("Batalla: " + heroe.getNombre() + " vs " + villano.getNombre());
-        vista.agregarHistorial("Ganador: " + ganador);
-        vista.agregarHistorial("Turnos: " + turnos);
-
+        String[] columnas = {"N° Batalla", "Héroe", "Villano", "Ganador", "Turnos"};
+        
+        vista.actualizarTabla(datos, columnas);
+        
         // Construir objeto PartidaGuardada básico para permitir guardar la partida individual
         partidaGuardada = new PartidaGuardada();
         partidaGuardada.setHeroeNombre(heroe.getNombre());
