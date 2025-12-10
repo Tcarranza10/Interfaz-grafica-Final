@@ -108,6 +108,7 @@ public class PantallaHistorial extends javax.swing.JFrame {
         });
 
         btnRefrescar.setText("Actualizar");
+        
         btnRefrescar.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnRefrescarActionPerformed(evt);
@@ -262,15 +263,6 @@ public class PantallaHistorial extends javax.swing.JFrame {
         return jTable1;
     }
 
-    private void agregarBotonRefrescar() {
-        javax.swing.JButton btnRefrescar = new javax.swing.JButton("Refrescar");
-        btnRefrescar.setToolTipText("Recargar datos desde la base de datos");
-        
-        // Agregar al panel de botones (junto a Volver, Cargar Partida, etc.)
-        jPanel2.add(btnRefrescar);
-        
-        // No necesita event handler aquí, se configura en el controlador
-    }
 
     // Método para que el controlador acceda al botón
     public javax.swing.JButton getBtnRefrescar() {
