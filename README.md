@@ -21,4 +21,4 @@ Durante el desarrollo se usaron las siguientes ayudas y recursos:
 - Cloude https://claude.ai/share/f82732c2-07ad-4333-a2e8-1859a88031a7 https://claude.ai/share/529f620e-0e42-44b3-a895-de6e0dfee863
 
 ## Video explicando
-- https://youtu.be/KJyrmycQ5Vc
+- https://youtu.be/Bb42LSi-oKI
